@@ -21,7 +21,7 @@
     <hr />
     <section>
       <h3>Import XLSX</h3>
-      <input type="file" @change="onChange" @blur="onChange" />
+      <input type="file" @change="onChange" />
       <XlsxWorkbook @change="onChange" @created="onCreated" />
       <xlsx-read :file="file">
         <xlsx-sheets>
@@ -56,7 +56,7 @@ import {
   XlsxSheet,
   XlsxDownload,
 } from "vue3-xlsx";
-import XLSX from 'xlsx'
+import XLSX from "xlsx";
 export default {
   components: {
     XlsxRead,
@@ -83,16 +83,17 @@ export default {
   methods: {
     onChange(event) {
       var reader = new FileReader();
-      reader.onload = function(e) {
+      reader.onload = function (e) {
         console.log("reader", e);
         var data = new Uint8Array(e.target.result);
         var workbook = XLSX.read(data, { type: "array" });
-        console.log("workbook", workbook)
-        let sheetName = workbook.SheetNames[0]
-        console.log("result", sheetName);
-         let worksheet = workbook.Sheets[sheetName];
-         console.log("worksheet", worksheet)
-         console.log("aâ", XLSX.utils.sheet_to_json(worksheet));
+        console.log("workbook", workbook);
+        let sheetName = workbook.SheetNames[0];
+
+        let worksheet = workbook.Sheets[sheetName];
+        console.log("worksheet", worksheet);
+        console.log("sheet_to_json", XLSX.utils.sheet_to_json(worksheet));
+        console.log("sheet_to_row_object_array", XLSX.utils.sheet_to_json(worksheet, {header : 1}))
       };
       console.log("reader", reader);
 
