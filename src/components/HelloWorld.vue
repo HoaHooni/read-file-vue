@@ -1,42 +1,112 @@
 <template>
   <div class="hello">
     <h1>{{ msg }}</h1>
-    <p>
-      For a guide and recipes on how to configure / customize this project,<br>
-      check out the
-      <a href="https://cli.vuejs.org" target="_blank" rel="noopener">vue-cli documentation</a>.
-    </p>
-    <h3>Installed CLI Plugins</h3>
-    <ul>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-babel" target="_blank" rel="noopener">babel</a></li>
-      <li><a href="https://github.com/vuejs/vue-cli/tree/dev/packages/%40vue/cli-plugin-eslint" target="_blank" rel="noopener">eslint</a></li>
-    </ul>
-    <h3>Essential Links</h3>
-    <ul>
-      <li><a href="https://vuejs.org" target="_blank" rel="noopener">Core Docs</a></li>
-      <li><a href="https://forum.vuejs.org" target="_blank" rel="noopener">Forum</a></li>
-      <li><a href="https://chat.vuejs.org" target="_blank" rel="noopener">Community Chat</a></li>
-      <li><a href="https://twitter.com/vuejs" target="_blank" rel="noopener">Twitter</a></li>
-      <li><a href="https://news.vuejs.org" target="_blank" rel="noopener">News</a></li>
-    </ul>
-    <h3>Ecosystem</h3>
-    <ul>
-      <li><a href="https://router.vuejs.org" target="_blank" rel="noopener">vue-router</a></li>
-      <li><a href="https://vuex.vuejs.org" target="_blank" rel="noopener">vuex</a></li>
-      <li><a href="https://github.com/vuejs/vue-devtools#vue-devtools" target="_blank" rel="noopener">vue-devtools</a></li>
-      <li><a href="https://vue-loader.vuejs.org" target="_blank" rel="noopener">vue-loader</a></li>
-      <li><a href="https://github.com/vuejs/awesome-vue" target="_blank" rel="noopener">awesome-vue</a></li>
-    </ul>
+    <h3>Create XLSX</h3>
+    <div>
+      <input v-model="sheetName" placeholder="type a new sheet name" />
+      <button v-if="sheetName" @click="addSheet">Add Sheet</button>
+    </div>
+    <div>Sheets: {{ sheets }}</div>
+    <xlsx-workbook>
+      <xlsx-sheet
+        :collection="sheet.data"
+        v-for="sheet in sheets"
+        :key="sheet.name"
+        :sheet-name="sheet.name"
+      />
+      <xlsx-download>
+        <button>Download</button>
+      </xlsx-download>
+    </xlsx-workbook>
+    <hr />
+    <section>
+      <h3>Import XLSX</h3>
+      <input type="file" @change="onChange" @blur="onChange" />
+      <XlsxWorkbook @change="onChange" @created="onCreated" />
+      <xlsx-read :file="file">
+        <xlsx-sheets>
+          <template #default="{ sheets }">
+            <select v-model="selectedSheet">
+              <option v-for="sheet in sheets" :key="sheet" :value="sheet">
+                {{ sheet }}
+              </option>
+            </select>
+          </template>
+        </xlsx-sheets>
+        <xlsx-table :sheet="selectedSheet" />
+        <xlsx-json :sheet="selectedSheet">
+          <template #default="{ collection }">
+            <div>
+              {{ collection }}
+            </div>
+          </template>
+        </xlsx-json>
+      </xlsx-read>
+    </section>
   </div>
 </template>
 
 <script>
+import {
+  XlsxRead,
+  XlsxTable,
+  XlsxSheets,
+  XlsxJson,
+  XlsxWorkbook,
+  XlsxSheet,
+  XlsxDownload,
+} from "vue3-xlsx";
+import XLSX from 'xlsx'
 export default {
-  name: 'HelloWorld',
+  components: {
+    XlsxRead,
+    XlsxTable,
+    XlsxSheets,
+    XlsxJson,
+    XlsxWorkbook,
+    XlsxSheet,
+    XlsxDownload,
+  },
+  name: "HelloWorld",
   props: {
-    msg: String
-  }
-}
+    msg: String,
+  },
+  data() {
+    return {
+      file: null,
+      selectedSheet: null,
+      sheetName: null,
+      sheets: [{ name: "SheetOne", data: [{ c: 2 }] }],
+      collection: [{ a: 1, b: 2 }],
+    };
+  },
+  methods: {
+    onChange(event) {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        console.log("reader", e);
+        var data = new Uint8Array(e.target.result);
+        var workbook = XLSX.read(data, { type: "array" });
+        console.log("workbook", workbook)
+        let sheetName = workbook.SheetNames[0]
+        console.log("result", sheetName);
+         let worksheet = workbook.Sheets[sheetName];
+         console.log("worksheet", worksheet)
+         console.log("aâ", XLSX.utils.sheet_to_json(worksheet));
+      };
+      console.log("reader", reader);
+
+      console.log(event);
+      this.file = event.target.files ? event.target.files[0] : null;
+      reader.readAsArrayBuffer(this.file);
+      console.log(this.file);
+    },
+    addSheet() {
+      this.sheets.push({ name: this.sheetName, data: [...this.collection] });
+      this.sheetName = null;
+    },
+  },
+};
 </script>
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
